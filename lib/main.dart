@@ -18,7 +18,9 @@ class QuizAcadamy extends StatelessWidget {
       builder: (context, child) {
         return child ?? const SizedBox.shrink();
       },
-      child: MaterialApp.router(routerConfig: AppRoutes.router),
+      child: MaterialApp.router(
+        debugShowCheckedModeBanner: false,
+        routerConfig: AppRoutes.router),
     );
   }
 }
