@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:quiz_academy/core/routes/routes_name.dart';
 import 'package:quiz_academy/features/exam/presentation/widgets/custom_nav_buttom.dart';
 import 'package:quiz_academy/features/home/domain/entities/subject_model.dart';
 
@@ -145,7 +144,7 @@ class _ShowAnswersPageState extends State<ShowAnswersPage> {
                     if (currentIndex < widget.subject.questions.length - 1) {
                       setState(() => currentIndex++);
                     } else {
-                      context.push( RoutesName.bottomNavigationBar);
+                      context.pop();
                     }
                   },
                 ),

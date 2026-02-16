@@ -78,7 +78,7 @@ class ResultPage extends StatelessWidget {
 
             SizedBox(height: 15.h),
             TextButton(
-              onPressed: () => context.go(RoutesName.showAnswersPage, extra: {
+              onPressed: () => context.push(RoutesName.showAnswersPage, extra: {
                 'subject': resultData['subject'],
                 'userAnswers': resultData['userAnswers'],
               }),

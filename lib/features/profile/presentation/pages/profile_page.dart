@@ -42,8 +42,10 @@ class _ProfilePageState extends State<ProfilePage> {
     final loadedUsername = CacheHelper.getData(key: 'username');
     final loadedEmail = CacheHelper.getData(key: 'email');
     
-    // Only update if data has changed
-    if (loadedUserId != currentUserId) {
+    // Update if any data has changed
+    if (loadedUserId != currentUserId || 
+        loadedUsername != username || 
+        loadedEmail != email) {
       setState(() {
         currentUserId = loadedUserId;
         username = loadedUsername ?? 'User';
