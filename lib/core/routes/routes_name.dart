@@ -8,4 +8,7 @@ class RoutesName {
   static const String resultHistoryPage = '/result-history-page';
   static const String profilePage = '/profile-page';
   static const String examPage = '/exam-page';
+  static const String resultPage = '/result-page';
+  static const String showAnswersPage = '/show-answers-page';
+  static const String editProfilePage = '/edit-profile-page';
 }

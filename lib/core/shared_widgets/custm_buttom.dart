@@ -21,11 +21,11 @@ class CustmButtom extends StatelessWidget {
         height: 60.h,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.whiteColor,
           borderRadius: BorderRadius.circular(30.r),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.4),
+              color: AppColors.greyColor.withOpacity(0.4),
               blurRadius: 10.r,
               offset: Offset(0, 5.h),
             ),

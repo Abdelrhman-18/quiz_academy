@@ -1,9 +1,89 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
+import 'package:quiz_academy/core/database/cache_helper.dart';
+import 'package:quiz_academy/core/routes/routes_name.dart';
+import 'package:quiz_academy/core/shared_widgets/profile_option_item.dart';
+import 'package:quiz_academy/core/shared_widgets/stat_card.dart';
 import 'package:quiz_academy/core/theme/app_colors.dart';
+import 'package:quiz_academy/core/di/di.dart';
+import 'package:quiz_academy/features/results_history/data/models/result_model.dart';
+import 'package:quiz_academy/features/results_history/presentation/cubit/results_history_cubit.dart';
+import 'package:quiz_academy/features/results_history/presentation/cubit/results_history_state.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  String username = 'User';
+  String email = 'user@email.com';
+  int? currentUserId;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  @override
+  void didUpdateWidget(ProfilePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Reload data to ensure fresh user info
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    final loadedUserId = CacheHelper.getData(key: 'uId');
+    final loadedUsername = CacheHelper.getData(key: 'username');
+    final loadedEmail = CacheHelper.getData(key: 'email');
+    
+    // Only update if data has changed
+    if (loadedUserId != currentUserId) {
+      setState(() {
+        currentUserId = loadedUserId;
+        username = loadedUsername ?? 'User';
+        email = loadedEmail ?? 'user@email.com';
+      });
+    }
+  }
+
+  Future<void> _logout() async {
+    // Show confirmation dialog
+    final shouldLogout = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Logout', style: TextStyle(color: AppColors.darkBlueColor)),
+        content: const Text('Are you sure you want to logout?'),
+        actions: [
+          TextButton(
+            onPressed: () => context.pop(false),
+            child: Text('Cancel', style: TextStyle(color: AppColors.greyColor)),
+          ),
+          TextButton(
+            onPressed: () => context.pop(true),
+            child: Text('Logout', style: TextStyle(color: AppColors.redColor)),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldLogout == true && mounted) {
+      // Clear user data
+      await CacheHelper.removeData(key: 'uId');
+      await CacheHelper.removeData(key: 'username');
+      await CacheHelper.removeData(key: 'email');
+      
+      // Navigate to login page
+      if (mounted) {
+        context.go(RoutesName.loginPage);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +109,7 @@ class ProfilePage extends StatelessWidget {
           child: Column(
             children: [
               SizedBox(height: 20.h),
-              // الجزء الخاص بصورة البروفايل والاسم
+              // Profile picture and name section
               Center(
                 child: Column(
                   children: [
@@ -46,14 +126,14 @@ class ProfilePage extends StatelessWidget {
                           child: CircleAvatar(
                             radius: 18.r,
                             backgroundColor: AppColors.primaryColor,
-                            child: Icon(Icons.edit, color: Colors.white, size: 18.sp),
+                            child: Icon(Icons.edit, color: AppColors.whiteColor, size: 18.sp),
                           ),
                         ),
                       ],
                     ),
                     SizedBox(height: 15.h),
                     Text(
-                      "Abdelrahman",
+                      username,
                       style: TextStyle(
                         fontSize: 24.sp,
                         fontWeight: FontWeight.bold,
@@ -61,7 +141,7 @@ class ProfilePage extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      "abdelrahman@email.com",
+                      email,
                       style: TextStyle(
                         fontSize: 14.sp,
                         color: AppColors.greyColor,
@@ -72,87 +152,68 @@ class ProfilePage extends StatelessWidget {
               ),
               SizedBox(height: 30.h),
               
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildStatCard("Total Quiz", "24"),
-                  _buildStatCard("Avg Score", "85%"),
-                ],
+              BlocProvider(
+                create: (context) => getIt<ResultsHistoryCubit>()..getResults(),
+                child: BlocBuilder<ResultsHistoryCubit, ResultsHistoryState>(
+                  builder: (context, state) {
+                    final results = state.maybeWhen(
+                      success: (data) => data,
+                      orElse: () => <ResultHistoryModel>[],
+                    );
+                    
+                    final totalQuiz = results.length;
+                    final avgScore = totalQuiz > 0
+                        ? (results.fold<int>(0, (sum, item) => sum + (item.total > 0 ? (item.score / item.total * 100).toInt() : 0)) / totalQuiz).toInt()
+                        : 0;
+
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        StatCard(title: "Total Quiz", value: "$totalQuiz"),
+                        StatCard(title: "Avg Score", value: "$avgScore%"),
+                      ],
+                    );
+                  },
+                ),
               ),
               
               SizedBox(height: 30.h),
               
-              _buildProfileOption(Icons.person_outline, "Edit Profile"),
-              _buildProfileOption(Icons.security, "Security"),
-              _buildProfileOption(Icons.help_outline, "Help Center"),
+              ProfileOptionItem(
+                icon: Icons.person_outline,
+                title: "Edit Profile",
+                onTap: () {
+                  context.push(RoutesName.editProfilePage).then((_) {
+                    // Reload user data when returning from edit profile
+                    _loadUserData();
+                  });
+                },
+              ),
+              ProfileOptionItem(
+                icon: Icons.security,
+                title: "Security",
+                onTap: () {},
+              ),
+              ProfileOptionItem(
+                icon: Icons.help_outline,
+                title: "Help Center",
+                onTap: () {},
+              ),
               
               SizedBox(height: 20.h),
               
-              _buildProfileOption(
-                Icons.logout, 
-                "Logout", 
-                textColor: Colors.red, 
-                iconColor: Colors.red,
+              ProfileOptionItem(
+                icon: Icons.logout,
+                title: "Logout",
+                textColor: AppColors.redColor,
+                iconColor: AppColors.redColor,
                 showArrow: false,
+                onTap: _logout,
               ),
               SizedBox(height: 40.h),
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildStatCard(String title, String value) {
-    return Container(
-      width: 150.w,
-      padding: EdgeInsets.all(15.w),
-      decoration: BoxDecoration(
-        color: AppColors.whiteColor,
-        borderRadius: BorderRadius.circular(15.r),
-        border: Border.all(color: AppColors.lightGreyColor),
-      ),
-      child: Column(
-        children: [
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 20.sp,
-              fontWeight: FontWeight.bold,
-              color: AppColors.primaryColor,
-            ),
-          ),
-          Text(
-            title,
-            style: TextStyle(fontSize: 12.sp, color: AppColors.greyColor),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProfileOption(IconData icon, String title, {Color? textColor, Color? iconColor, bool showArrow = true}) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 15.h),
-      child: ListTile(
-        onTap: () {},
-        leading: Container(
-          padding: EdgeInsets.all(8.w),
-          decoration: BoxDecoration(
-            color: (iconColor ?? AppColors.darkBlueColor).withOpacity(0.1),
-            borderRadius: BorderRadius.circular(10.r),
-          ),
-          child: Icon(icon, color: iconColor ?? AppColors.darkBlueColor, size: 24.sp),
-        ),
-        title: Text(
-          title,
-          style: TextStyle(
-            fontSize: 16.sp,
-            fontWeight: FontWeight.w500,
-            color: textColor ?? AppColors.darkBlueColor,
-          ),
-        ),
-        trailing: showArrow ? Icon(Icons.arrow_forward_ios, size: 16.sp, color: AppColors.greyColor) : null,
       ),
     );
   }

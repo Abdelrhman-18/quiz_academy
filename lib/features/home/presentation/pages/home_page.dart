@@ -1,11 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:quiz_academy/core/database/cache_helper.dart';
 import 'package:quiz_academy/core/routes/routes_name.dart';
+import 'package:quiz_academy/core/shared_widgets/subject_card.dart';
 import 'package:quiz_academy/core/theme/app_colors.dart';
+import 'package:quiz_academy/features/home/domain/entities/subject_model.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  String username = 'User';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUsername();
+  }
+
+  Future<void> _loadUsername() async {
+    final loadedUsername = CacheHelper.getData(key: 'username');
+    setState(() {
+      username = loadedUsername ?? 'User';
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,7 +39,7 @@ class HomePage extends StatelessWidget {
         elevation: 0,
         scrolledUnderElevation: 0,
         title: Text(
-          "Hello, Abdelerhman",
+          "Hello, $username",
           style: TextStyle(
             color: AppColors.darkBlueColor,
             fontSize: 18.sp, 
@@ -29,7 +52,7 @@ class HomePage extends StatelessWidget {
             child: CircleAvatar( 
               radius: 20.r,
               backgroundColor: AppColors.primaryColor,
-              child: Icon(Icons.person, color: Colors.white, size: 20.sp),
+              child: Icon(Icons.person, color: AppColors.whiteColor, size: 20.sp),
             ),
           ),
         ],
@@ -51,50 +74,18 @@ class HomePage extends StatelessWidget {
                 ),
                 SizedBox(height: 20.h), 
                 ListView.builder(
-                  itemCount: 10,
+                  itemCount: subjects.length,
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemBuilder: (context, index) {
-                    return Padding(
-                      padding: EdgeInsets.symmetric(vertical: 8.h),
-                      child: ListTile(
-                        onTap: () {
-                          context.push(RoutesName.examPage);
-                        },
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15.r),
-                          side: BorderSide(color: AppColors.lightGreyColor.withOpacity(0.5)),
-                        ),
-                        leading: Container(
-                          width: 50.w,
-                          height: 50.h,
-                          decoration: BoxDecoration(
-                            color: AppColors.primaryColor.withOpacity(0.1), 
-                            borderRadius: BorderRadius.circular(12.r),
-                          ),
-                          child: Icon(Icons.science_outlined, color: AppColors.primaryColor, size: 28.sp),
-                        ),
-                        trailing: Icon(
-                          Icons.arrow_forward_ios,
-                          color: AppColors.darkBlueColor,
-                          size: 16.sp,
-                        ),
-                        title: Text(
-                          "Science Quiz",
-                          style: TextStyle(
-                            color: AppColors.darkBlueColor,
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        subtitle: Text(
-                          "10 Questions",
-                          style: TextStyle(
-                            color: AppColors.greyColor,
-                            fontSize: 13.sp,
-                          ),
-                        ),
-                      ),
+                    return SubjectCard(
+                      name: subjects[index].name,
+                      questionsCount: subjects[index].questionsCount,
+                      icon: subjects[index].icon,
+                      color: subjects[index].color,
+                      onTap: () {
+                        context.push(RoutesName.examPage, extra: subjects[index]);
+                      },
                     );
                   },
                 ),

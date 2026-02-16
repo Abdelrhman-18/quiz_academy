@@ -14,11 +14,18 @@ class BottomNavPage extends StatefulWidget {
 class _BottomNavPageState extends State<BottomNavPage> {
   int _selectedIndex = 0;
 
-  final List<Widget> _pages = [
-    const HomePage(),
-    const ResultsHistoryPage(),
-    const ProfilePage(),
-  ];
+  Widget _getPage(int index) {
+    switch (index) {
+      case 0:
+        return const HomePage();
+      case 1:
+        return const ResultsHistoryPage();
+      case 2:
+        return const ProfilePage();
+      default:
+        return const HomePage();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +53,7 @@ class _BottomNavPageState extends State<BottomNavPage> {
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
       ),
-      body: _pages[_selectedIndex],
+      body: _getPage(_selectedIndex),
     );
   }
 }
